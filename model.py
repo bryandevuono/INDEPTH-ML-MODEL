@@ -5,9 +5,11 @@ from tensorflow.keras.applications import MobileNetV2
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
 from tensorflow.keras.models import Model
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.models import load_model
 import os
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0" #TODO: warning weghalen
 
+MODEL_PATH = 'skin_condition_model.h5'
 
 # TODO: make this more user friendly
 # Load the image here:
@@ -19,52 +21,59 @@ img_resized = cv2.resize(img, (224, 224)) / 255.0
 # Add batch dimension
 input_data = np.expand_dims(img_resized, axis=0)
 
-# Base model (pretrained on ImageNet)
-# features: color diff, edges, patterns
-base_model = MobileNetV2(weights="imagenet", include_top=False, input_shape=(224,224,3))
+if os.path.exists(MODEL_PATH):
+    print("Loading saved model...")
+    model = load_model(MODEL_PATH)
+else:
+    print("Training new model...")
 
-# summarize
-x = base_model.output
-x = GlobalAveragePooling2D()(x)
-predictions = Dense(7, activation="softmax")(x)  # 7 classes, adjust as needed
+    # Base model (pretrained on ImageNet)
+    base_model = MobileNetV2(weights="imagenet", include_top=False, input_shape=(224,224,3))
 
-model = Model(inputs=base_model.input, outputs=predictions)
+    # summarize
+    x = base_model.output
+    x = GlobalAveragePooling2D()(x)
+    predictions = Dense(7, activation="softmax")(x)  # 7 classes, adjust as needed
 
-# Freeze base model
-for layer in base_model.layers:
-    layer.trainable = False
+    model = Model(inputs=base_model.input, outputs=predictions)
 
-# Compile
-model.compile(
-    optimizer="adam",
-    loss="sparse_categorical_crossentropy",
-    metrics=["accuracy"]
-)
+    # Freeze base model
+    for layer in base_model.layers:
+        layer.trainable = False
 
-# split the dataset for validation
-datagen = ImageDataGenerator(rescale=1./255, validation_split=0.2)  # 20% validation
+    # Compile
+    model.compile(
+        optimizer="adam",
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"]
+    )
 
-train_dataset = datagen.flow_from_directory(
-    "datasets",
-    target_size=(224, 224),
-    batch_size=32,
-    class_mode="categorical",
-    subset="training"
-)
+    # split the dataset for validation
+    datagen = ImageDataGenerator(rescale=1./255, validation_split=0.2)  # 20% validation
 
-# to protect against memory bias of the model, validation data
-val_dataset = datagen.flow_from_directory(
-    "datasets",
-    target_size=(224, 224),
-    batch_size=32,
-    class_mode="categorical",
-    subset="validation"
-)
+    train_dataset = datagen.flow_from_directory(
+        "datasets",
+        target_size=(224, 224),
+        batch_size=32,
+        class_mode="categorical",
+        subset="training"
+    )
 
+    # to protect against memory bias of the model, validation data
+    val_dataset = datagen.flow_from_directory(
+        "datasets",
+        target_size=(224, 224),
+        batch_size=32,
+        class_mode="categorical",
+        subset="validation"
+    )
 
-# training with the dataset
-# NOTE: epoch means amount of training rounds
-history = model.fit(train_dataset, validation_data=val_dataset, epochs=10)
+    # training with the dataset
+    # NOTE: epoch means amount of training rounds
+    history = model.fit(train_dataset, validation_data=val_dataset, epochs=10)
+
+    # Save model so we don't retrain next time
+    model.save(MODEL_PATH)
 
 
 pred = model.predict(input_data)
