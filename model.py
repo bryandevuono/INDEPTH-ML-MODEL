@@ -13,7 +13,7 @@ MODEL_PATH = 'skin_condition_model.h5'
 
 # TODO: make this more user friendly
 # Load the image here:
-img = cv2.imread("./datasets/archive/train/Eczema/03AngularCheilitis.jpg")
+img = cv2.imread("./testdata/images.jpg")
 
 # Resize for model
 img_resized = cv2.resize(img, (224, 224)) / 255.0
@@ -26,14 +26,13 @@ if os.path.exists(MODEL_PATH):
     model = load_model(MODEL_PATH)
 else:
     print("Training new model...")
-
     # Base model (pretrained on ImageNet)
     base_model = MobileNetV2(weights="imagenet", include_top=False, input_shape=(224,224,3))
 
     # summarize
     x = base_model.output
     x = GlobalAveragePooling2D()(x)
-    predictions = Dense(7, activation="softmax")(x)  # 7 classes, adjust as needed
+    predictions = Dense(5, activation="softmax")(x)  # 5 classes, adjust as needed
 
     model = Model(inputs=base_model.input, outputs=predictions)
 
@@ -55,7 +54,7 @@ else:
         "datasets",
         target_size=(224, 224),
         batch_size=32,
-        class_mode="categorical",
+        class_mode="sparse",  # sparse integer labels
         subset="training"
     )
 
@@ -75,12 +74,13 @@ else:
     # Save model so we don't retrain next time
     model.save(MODEL_PATH)
 
-
+print("processing...")
 pred = model.predict(input_data)
 class_index = np.argmax(pred)
 
 skin_problems = {
-    1 : "eczeem",
+    0 : "eczeem",
+    1 : "Ehler Danlos",
     2 : "healthy",
     3 : "mailgnant",
     4 : "psoriasis"
