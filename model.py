@@ -13,13 +13,11 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 
 MODEL_PATH = 'skin_condition_model.h5'
-    
-# TODO: make this more user friendly
 
 img = cv2.imread("./testdata/Ehler Danlos/Ehlers-Danlos-syndroom2.jpg", cv2.IMREAD_COLOR)
 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 img_resized = cv2.resize(img, (224,224))
-img_resized = img_resized / 255.0  # match ImageDataGenerator's rescale
+img_resized = img_resized / 255.0
 
 input_data = np.expand_dims(img_resized, axis=0)
 
@@ -28,7 +26,7 @@ if os.path.exists(MODEL_PATH):
     model = load_model(MODEL_PATH)
 else:
     print("Training new model...")                  
-    # Base model (pretrained)
+    # Base model
     base_model = MobileNetV2(weights="imagenet", include_top=False, input_shape=(224,224,3))
 
     x = base_model.output
@@ -50,7 +48,6 @@ else:
         metrics=["accuracy"]
     )
 
-    # split the dataset
     datagen = ImageDataGenerator(
         rescale=1./255,
         validation_split=0.2,
@@ -86,7 +83,6 @@ else:
     )
 
     class_weights = dict(enumerate(class_weights))
-    # training with the dataset
     # NOTE: epoch means amount of training rounds
     history = model.fit(
         train_dataset,
@@ -95,7 +91,6 @@ else:
         class_weight=class_weights,
     )
 
-    # Save model so we don't retrain next time
     model.save(MODEL_PATH)
 
 print("processing...")
