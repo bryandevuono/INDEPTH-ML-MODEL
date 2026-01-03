@@ -14,7 +14,7 @@ os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 
 MODEL_PATH = 'skin_condition_model.h5'
 
-img = cv2.imread("./testdata/Ehler Danlos/normal.jpg", cv2.IMREAD_COLOR)
+img = cv2.imread("./testdata/Ehler Danlos/NaamloosUNV.jpg", cv2.IMREAD_COLOR)
 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 img_resized = cv2.resize(img, (224,224))
 img_resized = img_resized / 255.0
@@ -87,7 +87,7 @@ else:
     history = model.fit(
         train_dataset,
         validation_data=val_dataset,
-        epochs=20,
+        epochs=25,
         class_weight=class_weights,
     )
 
