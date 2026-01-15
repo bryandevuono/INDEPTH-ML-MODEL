@@ -12,9 +12,8 @@ if os.path.exists(MODEL_PATH):
     
 test_datagen = ImageDataGenerator(rescale=1./255)
 
-# Load only the Ehlers-Danlos class
 ed_test_dataset = test_datagen.flow_from_directory(
-    "../testdata",                # parent folder
+    "../testdata",               
     target_size=(224, 224),
     batch_size=32,
     class_mode="sparse",
