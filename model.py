@@ -14,7 +14,7 @@ os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 
 MODEL_PATH = 'skin_condition_model.h5'
 
-img = cv2.imread("./testdata/Ehler Danlos/NaamloosUNV.jpg", cv2.IMREAD_COLOR)
+img = cv2.imread("./testdata/demo/blauweplekken.png", cv2.IMREAD_COLOR)
 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 img_resized = cv2.resize(img, (224,224))
 img_resized = img_resized / 255.0
@@ -101,7 +101,7 @@ class_index = np.argmax(pred)
 
 skin_problems = {
     0 : "Ehler Danlos",
-    1 : "Healthy"
+    1 : "Not EDS"
 }
 
 print(skin_problems[class_index])
